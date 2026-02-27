@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: mkehd-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run prisma:generate --workspace @mkehd/api && npm run build --workspace @mkehd/api
+    startCommand: npm run start --workspace @mkehd/api
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: DEFAULT_APPROVER_EMAIL
+        value: rachel@dealership.local
+      - key: OAUTH_STATE_SECRET
+        generateValue: true
+      - key: TOKEN_ENCRYPTION_KEY
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_REDIRECT_URI
+        sync: false
+      - key: MICROSOFT_CLIENT_ID
+        sync: false
+      - key: MICROSOFT_CLIENT_SECRET
+        sync: false
+      - key: MICROSOFT_TENANT_ID
+        value: common
+      - key: MICROSOFT_REDIRECT_URI
+        sync: false
