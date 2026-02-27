@@ -1,0 +1,15 @@
+{
+  "name": "mkehd",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces",
+    "dev:api": "npm run dev --workspace @mkehd/api",
+    "dev:web": "npm run dev --workspace @mkehd/web",
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces"
+  }
+}

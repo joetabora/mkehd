@@ -1,0 +1,211 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  APPROVER
+}
+
+enum SeasonType {
+  INDOOR
+  OUTDOOR
+}
+
+enum EventStatus {
+  DRAFT
+  READY
+  LIVE
+  DONE
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+  BLOCKED
+}
+
+enum DocumentType {
+  PLAYBOOK
+  CHECK_REQUEST
+  CASH_RECEIPT
+  W9
+  STAFF_AGREEMENT
+  ASSET
+}
+
+enum StorageProvider {
+  LOCAL
+  GDRIVE
+  ONEDRIVE
+}
+
+enum IntegrationProvider {
+  GOOGLE
+  MICROSOFT
+}
+
+enum SyncJobType {
+  CALENDAR_SYNC
+}
+
+enum SyncJobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ApprovalType {
+  CHECK_REQUEST
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum LeadSource {
+  QR_FORM
+}
+
+model User {
+  id              String               @id @default(cuid())
+  name            String
+  email           String               @unique
+  roles           UserRole[]
+  createdAt       DateTime             @default(now())
+  events          Event[]              @relation("EventCreator")
+  assigned        EventTask[]          @relation("TaskOwner")
+  uploads         Document[]           @relation("DocumentUploader")
+  approvals       Approval[]           @relation("ApprovalRequester")
+  integrations    IntegrationAccount[]
+  requestedJobs   SyncJob[]            @relation("SyncRequester")
+}
+
+model Event {
+  id          String        @id @default(cuid())
+  title       String
+  eventDate   DateTime
+  seasonType  SeasonType
+  status      EventStatus   @default(DRAFT)
+  goalQrScans Int?
+  createdById String
+  createdBy   User          @relation("EventCreator", fields: [createdById], references: [id])
+  tasks       EventTask[]
+  documents   Document[]
+  leads       LeadCapture[]
+  approvals   Approval[]
+  calendarSyncs CalendarEventSync[]
+  createdAt   DateTime      @default(now())
+}
+
+model EventTask {
+  id          String      @id @default(cuid())
+  eventId     String
+  event       Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  title       String
+  dueAt       DateTime?
+  ownerUserId String?
+  owner       User?       @relation("TaskOwner", fields: [ownerUserId], references: [id])
+  status      TaskStatus  @default(TODO)
+  dependsOnId String?
+  dependsOn   EventTask?  @relation("TaskDependency", fields: [dependsOnId], references: [id])
+  dependents  EventTask[] @relation("TaskDependency")
+}
+
+model Document {
+  id            String          @id @default(cuid())
+  eventId       String?
+  event         Event?          @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  type          DocumentType
+  storageKey    String
+  provider      StorageProvider @default(LOCAL)
+  uploadedById  String
+  uploadedBy    User            @relation("DocumentUploader", fields: [uploadedById], references: [id])
+  uploadedAt    DateTime        @default(now())
+  originalName  String?
+  mimeType      String?
+  externalId    String?
+  externalUrl   String?
+}
+
+model Approval {
+  id            String         @id @default(cuid())
+  eventId       String
+  event         Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  type          ApprovalType
+  status        ApprovalStatus @default(PENDING)
+  requestedById String
+  requestedBy   User           @relation("ApprovalRequester", fields: [requestedById], references: [id])
+  approverEmail String
+  decidedAt     DateTime?
+  createdAt     DateTime       @default(now())
+}
+
+model LeadCapture {
+  id         String     @id @default(cuid())
+  eventId    String
+  event      Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  source     LeadSource
+  contactRef String?
+  capturedAt DateTime   @default(now())
+}
+
+model IntegrationAccount {
+  id                String              @id @default(cuid())
+  userId            String
+  user              User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider          IntegrationProvider
+  providerAccountId String?
+  email             String?
+  accessTokenEnc    String
+  refreshTokenEnc   String?
+  tokenType         String?
+  scope             String?
+  expiresAt         DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  calendarSyncs     CalendarEventSync[]
+
+  @@unique([userId, provider])
+}
+
+model CalendarEventSync {
+  id                   String              @id @default(cuid())
+  eventId              String
+  event                Event               @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  integrationAccountId String
+  integrationAccount   IntegrationAccount  @relation(fields: [integrationAccountId], references: [id], onDelete: Cascade)
+  provider             IntegrationProvider
+  externalEventId      String
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  @@unique([eventId, integrationAccountId, provider])
+}
+
+model SyncJob {
+  id            String        @id @default(cuid())
+  type          SyncJobType
+  status        SyncJobStatus @default(PENDING)
+  payload       Json
+  result        Json?
+  requestedById String
+  requestedBy   User          @relation("SyncRequester", fields: [requestedById], references: [id])
+  attempts      Int           @default(0)
+  error         String?
+  runAt         DateTime      @default(now())
+  createdAt     DateTime      @default(now())
+  startedAt     DateTime?
+  finishedAt    DateTime?
+
+  @@index([status, runAt])
+}

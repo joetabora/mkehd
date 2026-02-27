@@ -1,0 +1,11 @@
+node_modules
+.env
+.env.*
+!.env.example
+.DS_Store
+dist
+build
+coverage
+apps/api/uploads
+apps/api/prisma/dev.db
+apps/web/.vite
