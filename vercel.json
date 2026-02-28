@@ -1,9 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "vite",
-  "installCommand": "npm install --include=dev --prefix apps/web",
-  "buildCommand": "npm --prefix apps/web run build",
-  "outputDirectory": "apps/web/dist",
+  "installCommand": "if [ -f apps/web/package.json ]; then npm install --include=dev --prefix apps/web; elif [ -f ../web/package.json ]; then npm install --include=dev --prefix ../web; else echo 'web package.json not found'; exit 1; fi",
+  "buildCommand": "if [ -f apps/web/package.json ]; then npm --prefix apps/web run build -- --outDir ../../dist; elif [ -f ../web/package.json ]; then npm --prefix ../web run build -- --outDir ../api/dist; else echo 'web package.json not found'; exit 1; fi",
+  "outputDirectory": "dist",
   "rewrites": [
     {
       "source": "/(.*)",
