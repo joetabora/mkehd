@@ -113,12 +113,8 @@ This repo is set up for:
    - `GOOGLE_REDIRECT_URI` = `https://<your-render-api>/integrations/oauth/callback/google`
    - `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`
    - `MICROSOFT_REDIRECT_URI` = `https://<your-render-api>/integrations/oauth/callback/microsoft`
-5. Open Render Shell and run:
-
-```bash
-npm run prisma:migrate:deploy --workspace @mkehd/api
-npm run prisma:seed --workspace @mkehd/api
-```
+5. No shell required: API startup runs `prisma migrate deploy` + seed automatically via
+   `bootstrap:prod` before starting the server.
 
 6. Verify health endpoint:
    - `https://<your-render-api>/health` should return `{ "status": "ok" }`.
@@ -152,6 +148,7 @@ Also set allowed JavaScript/web origins to your Vercel frontend domain where req
 ### Free-tier caveats
 
 - Render free web services can spin down when idle, causing cold starts.
+- On each cold start, bootstrap runs migrations/seed (idempotent) before API starts.
 - Current file uploads are stored on local service disk, so they are not durable across redeploy/restarts.
   - Next recommended step: move document storage to S3/R2/Blob storage.
 

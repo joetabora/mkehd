@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: free
     buildCommand: npm ci && npm run prisma:generate --workspace @mkehd/api && npm run build --workspace @mkehd/api
-    startCommand: npm run start --workspace @mkehd/api
+    startCommand: npm run bootstrap:prod --workspace @mkehd/api && npm run start --workspace @mkehd/api
     healthCheckPath: /health
     autoDeploy: true
     envVars:
